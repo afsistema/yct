@@ -21,5 +21,5 @@ class Number extends Model
     public function number_preferences()
     {
         return $this->hasMany(NumberPreference::class, 'number_id');
-    }
+    }    
 }

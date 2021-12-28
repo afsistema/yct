@@ -31,8 +31,9 @@ class NumberController extends Controller
 
     public function create($id)
     {
-        $customers = Customer::select('id', 'name')->orderBy('name')->get();
-        $number = Number::findOrNew($id);
+        
+        $number = Number::findOrNew($id);      
+        $customers = Customer::select('id', 'name')->orderBy('name')->get();        
         return view('number/create', compact('number', 'customers'));
     }
 
