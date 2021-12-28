@@ -13,40 +13,50 @@ class CustomerController extends Controller
     {
         $this->middleware('auth');
     }
-   
+    
     public function index()
+    
     {
-        $customers = Customer::orderBy('id')->paginate(5);
+        if (Auth::user()->roles  == 'Administrador') {
+            $customers = Customer::orderBy('id')->paginate(5);
+            
+            $users = User::select('id', 'name')->orderBy('name')->get();
 
-        $users = User::select('id', 'name')->orderBy('name')->get();
-
-        return view('customer/index', compact('customers', 'users'));
+            return view('customer/index', compact('customers', 'users'));
+        }
     }
 
     public function create($id)
     {
-        $users = User::select('id', 'name')->orderBy('name')->get();
-        $customer = Customer::findOrNew($id);
-        return view('customer/create', compact('customer', 'users'));
+        if (Auth::user()->roles  == 'Administrador') {
+            $users = User::select('id', 'name')->orderBy('name')->get();
+            $customer = Customer::findOrNew($id);
+            return view('customer/create', compact('customer', 'users'));
+        }
     }
 
     public function save($id, Request $request)
     {
-        $customer = Customer::findOrNew($id);
-        $customer->user_id = $request->user_id;
-        $customer->name = $request->name;
-        $customer->document = $request->document;
-        $customer->status = $request->status;
-        $customer->save();
-        $request->session()->flash('status', 'Cliente salvo com sucesso!');
-        return redirect('/customer');
+        if (Auth::user()->roles  == 'Administrador') {
+            $customer = Customer::findOrNew($id);
+            $customer->user_id = $request->user_id;
+            $customer->name = $request->name;
+            $customer->document = $request->document;
+            $customer->status = $request->status;
+            $customer->save();
+            $request->session()->flash('status', 'Cliente salvo com sucesso!');
+            return redirect('/customer');
+        }
     }  
 
     public function delete($id, Request $request)
     {
-        $customer = Customer::find($id);       
-        $customer->delete();
-        $request->session()->flash('status', 'Cliente apagado com sucesso!');
-        return redirect('/customer');
+        if (Auth::user()->roles  == 'Administrador') {
+            $customer = Customer::find($id);
+            $customer->delete();
+            $request->session()->flash('status', 'Cliente apagado com sucesso!');
+            return redirect('/customer');
+        }
     }
+    
 }
