@@ -6,6 +6,7 @@ use App\Models\Number;
 use App\Models\Customer;
 use App\Models\NumberPreference;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class NumberController extends Controller
 {
@@ -16,7 +17,14 @@ class NumberController extends Controller
 
     public function index()
     {
-        $numbers = Number::orderBy('id')->paginate(5);
+        $numbers = Number::orderBy('id');
+        if(Auth::user()->roles  != 'Administrador') {
+            $numbers = $numbers->whereHas('customer', function($query) {
+                $query->where('user_id', Auth::user()->id);
+            });  
+        }
+        
+        $numbers = $numbers->paginate(5);
         $customers = Customer::select('id', 'name')->orderBy('name')->get();
         return view('number/index', compact('numbers', 'customers'));
     }
@@ -35,6 +43,20 @@ class NumberController extends Controller
         $number->number = $request->number;
         $number->status = $request->status;
         $number->save();
+
+        $number->number_preferences()->delete();
+        if (isset($request->preferences)) {
+            foreach ($request->preferences as $preference) {
+                if ($preference['preference_name'] != "" || $preference['preference_value'] != "" ) {
+                    $item2 = new NumberPreference();
+                    $item2->number_id = $number->id;
+                    $item2->name = $preference['preference_name'];
+                    $item2->value = $preference['preference_value'];                    
+                    $item2->save();
+                }
+            }
+        }
+
         if($number->status_preferences != 1) {
             $item = new NumberPreference();
             $item->number_id = $number->id;
@@ -51,19 +73,8 @@ class NumberController extends Controller
          $number->status_preferences = 1; 
          $number->save();     
          
-         $number->number_preferences()->delete();
-         if (isset($request->preferences)) {
-            foreach ($request->preferences as $preference) {
-                if ($preference['preference_name'] != "" || $preference['preference_value'] != "" ) {
-                    $item2 = new NumberPreference();
-                    $item2->number_id = $number->id;
-                    $item2->name = $preference['preference_name'];
-                    $item2->value = $preference['preference_value'];                    
-                    $item2->save();
-                }
-            }
-        }
-
+         
+         
         $request->session()->flash('status', 'Número salvo com sucesso!');
         return redirect('/number');
     }     
